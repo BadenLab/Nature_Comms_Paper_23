@@ -1,0 +1,271 @@
+MEA Clustering Guide
+
+File Summary:
+Command line codes to modify and run:
+1.	CL_Cluster_Data_Prep_5.m: Data preparation Command Line (modify and run this first);
+2.	CL_RF_Clustering_6_fn.m: Clustering Command Line (modify and run this second).
+
+Other functions:
+Functions called by ‘CL_Cluster_Data_Prep_5.m’:
+1.	mean_raw_stim_FFF_Noise_fn.m
+2.	mean_raw_stim_FFF_Noise_norm_fn.m
+3.	STE_Full_FFF_Noise_fn.m
+4.	STA_FFF_Noise_fn.m
+5.	STE_Full_FFF_Noise_norm_fn.m
+6.	STA_FFF_Noise_fn.m
+
+Functions called by ‘CL_RF_Clustering_6_fn.m:
+7.	GMM_Clust_fn_3
+8.	Hier_Clust_fn_2
+
+Other sub functions:
+9.	vline
+10.	bluewhitered
+11.	subaxis
+
+Step-by-step guide to clustering:
+NB: Do not alter any parts of the code other than those specified below or the universe may implode.
+CL_Cluster_Data_Prep_5.m
+1.	Make sure that both command lines and all 8 functions above are in the same folder.
+%% Make Choices
+2.	Choose whether to use parallel processing and number of cores
+a.	p.Parpool   = 1;      % 1: Yes, 2: No.
+b.	p.Num_Cores = 6; % default = 6
+3.	Choose data sets
+These will be listed below in Step 8. For now, make a vector as long as the number of data sets (experiments) and place a 1 where the data set should be included in the analysis and a 0 where it should be ignored.
+a.	data_set_vec = [1 1 0 1 1]; % In this case there are 5 data sets and 1, 2, 4 and 5 are selected.
+4.	Choose which objects to cluster on
+The vector is as long as the number of possible stimuli/summary statistics (listed, in order, below). Set the element in the vector to 1 where the stimulus should be used for clustering and to 0 where it should not be used for clustering.
+a.	% 1. FFF;                                		  (all data sets)
+b.	% 2. Chirp;                               		  (all data sets)
+c.	% 3. FFF Noise;                      		  (most recent data sets)
+d.	% 4. Gratings;                            		  (all data sets)
+e.	% 5. CNoise: Full RF Size;            		  (all data sets)
+f.	% 6. CNoise: Full RF Ellipticity;        	  (all data sets)
+g.	% 7. CNoise: Full RF Dominant Axis Angle; (all data sets)
+h.	% 8. FFF2                                 		   (6 colours and triggers);
+i.	% 9. Chirp2                               		   (3 triggers);
+j.	% 10. Silent Substitution                 	   (18 triggers);
+k.	% 11. Contrast Steps                      		   (10 triggers);
+l.	% 12. Chirp3                              		   (4 triggers).
+p.Obj_clust_vec = [0,0,1,0,0,0,0,0,0,0,0,0]; % In this case only FFFNoise is being used to cluster the cells
+5.	Choose which objects to plot
+The choice of which stimuli/summary statistics to plot is independent of the choice of which to cluster on. As before, choose 1 in the vector to select and 0 to ignore. Here the options are:
+a.	% 1. Cell positions;                      		(scatter plot)
+b.	% 2. Mean RF contour;                    	(line plot)
+c.	% 3. FFF;                                 		(trace & heatmap)
+d.	% 4. Chirp;                               		(trace & heatmap)
+e.	% 5. FFF Noise;                           		(trace & heatmap)
+f.	% 6. Gratings;                            		(trace & heatmap)
+g.	% 7. CNoise: Full RF Size;                	(histogram)
+h.	% 8. CNoise: Full RF Ellipticity;         	(histogram)
+i.	% 9. CNoise: Full RF Dominant Axis Angle; (histogram)
+j.	% 10. FFF2 				(6 colours and triggers);
+k.	% 11. Chirp2 				(3 triggers);
+l.	% 12. Silent Substitution 			(18 triggers);
+m.	% 13. Contrast Steps 			(10 triggers);
+n.	% 14. Chirp3 				(4 triggers);
+o.	% 15. Data Set.                           		(histogram)
+p.Obj_plot_vec     = [0,0,0,0,1,0,0,0,0,0,0,0,0,0,1]; % In this case only FFF Noise and Data Set are being plotted.
+
+6.	QI Thresholds
+Quality Index Thresholds for each stimulus type.
+Currently these are set to:
+a.	FFF_QI_thresh            = 0.20;
+b.	Chirp_QI_thresh          = 0.6;
+c.	FFF_Noise_QI_thresh      = 2.5;
+d.	Gratings_400px_QI_thresh = 0.2;
+e.	CNoise_QI_thresh         = 0;
+f.	FFF2_QI_thresh           = 0.4;
+g.	Chirp2_QI_thresh         = 0.4;
+h.	SSub_QI_thresh           = 0.2;
+i.	CSteps_QI_thresh         = 0.4;
+j.	Chirp3_QI_thresh         = 0.4;
+7.	Choose whether to use CNoise QI
+1 = Yes; 2 = No. Set to No in general if want even 1 pixel RFs.
+Use_CNoise_QI = 2;
+% Data set names
+8.	Provide the data file names for each of the data sets you are using. 
+Do this within the correct ‘if’ statement for each stimulus type e.g. if giving file names for FFF stimuli then do this in the ‘if p.Obj_clust_vec(1) == 1 || p.Obj_plot_vec(3) == 1 % FFF’ section.
+You can either use a single data file e.g. ‘FFF_DataFiles = {'FFF'};’; or multiple data files, e.g. ‘FFF_DataFiles = {'FFF',...
+                                  '03_12_2020_ZF_Ph01_FFF_All_Cells_Corr'};’
+This should be consistent with the number of entries chosen in the ‘data_set_vec’ chosen in Step 3.
+Always retain the ‘All_DataFiles = [All_DataFiles;FFF_DataFiles];’ type command at the bottom of each if statement.
+All of these data files should be stored in the same folder as the MATLAB codes and with the same names as defined in this step.
+9.	Set Data Names for Figure Labels 
+This is to label the data set histogram that shows how many cells in a given cluster come from each data set (experiment).
+The info has to be entered 3 times effectively (see example below), which might seem odd, but is required in order for the plot to display correctly.
+E.g.
+Gen_Data_Names_vec      = {'4/8/21 Ph01','4/8/21 Ph02'};
+Gen_Data_Names_bar_vec  = categorical({'4/8/21 Ph01','4/8/21 Ph02'});
+Gen_Data_Names_bar_vec = reordercats(Gen_Data_Names_bar_vec,{'4/8/21 Ph01','4/8/21 Ph02'});
+10.	Plot Object Names
+These are the names of the possible stimuli that the code can work with. It’s probably best not to alter this.
+p.Plot_obj_name_vec
+%%% Dimensionality reduction options
+11.	Choose dimensionality reduction method
+‘PCA global’ applies PCA once across each stimulus, whereas ‘PCA segmented’ applies it separately  for each part of the stimulus separated by triggers e.g. the once for each colour in the FFF.        
+a.	1. PCA global           	(across whole object)
+b.	2. PCA segmented        	(performed separately on each object segment)
+c.	3. sparse PCA global    	(not currently implemented)
+d.	4. sparse PCA segmented (not currently implemented)
+I choose 2 as the default and recommend sticking with this.
+p.Dim_red_meth = 2;
+12.	Choose PCA explained variance threshold type
+Chose how the number of principal components will be chosen.
+Options:
+a.	1. percentage variance explained;
+b.	2. number of components.
+p.PCA_thresh_type = 1;
+I use 1 as default. 
+p.PCA_thresh_type = 1;
+13.	Chose PCA explained variance threshold / number of components
+Either choose p.PCA_ExpVar_thresh (= 50 as default) or p.PCA_comp_num (= 2 as default), depending upon choice in Step 12.
+
+%%% Choose clustering method
+You can either use ‘Gaussian Mixture Models (GMM)’ (p.Clust_Meth = 1) or ‘Hierarchical’ clustering (p.Clust_Meth = 2). I would go with GMM by default as it is easier to use and both give good results.
+
+% Gaussian Mixture Models Settings
+14.	Options:
+a.	p.k_vec                           = 1:50;                     % numbers of clusters
+b.	p.Sigma               	       = {'diagonal','full'}; % diagonal and full covariance matrices 
+c.	p.SharedCovariance    = {true,false};       	% covariance matrices are either all identical or allowed to differ
+d.	p.SCtext                          = {'true','false'};    % text for labelling shared covariance option in figures
+e.	p.RegularizationValue = 1e-5;                 	% to avoid badly conditioned covariance matrices.
+f.	p.Max_Iter                     = 1e4;                       % max num iter. Do not alter.
+g.	p.Replicate_Num          = 20;                        % 20 replicates in Baden et al. (2016).
+‘p.k_vec’ determine the number of clusters to try, all those in the range specified will be calculated. The ‘shape’ of the clusters can have various degrees of freedom. ‘p.Sigma‘ determines if the covariance matrix is diagonal or full. I would leave both options, but if you choose only 1 I would go for full. ‘p.SharedCovariance’ determines if the clusters should all be the same shape and orientation.  I would leave both options, but if you choose only 1 I would go for false (unshared). ‘p.SCtext‘ should be consistent with your choice for ‘p.SharedCovariance’. Leave options in grey as they are.
+You then have the option to decide how you will choose the optimum number of clusters. This can be judged as the case which gives the minimum BIC (p.Info_crit = 1), or the minimum AIC (p.Info_crit = 2), or the number of clusters can be prescribed in advance (p.Info_crit = 3). I would use the BIC in general and never use the AIC. Sometimes I will prescribe the cluster number e.g. if the BIC optimal clustering is unsatisfactory.
+If you choose p.Info_crit = 3, then the following need to be set:
+h.	p.Num_Clus       = 25;  % Number of clusters.
+i.	p.Sig_opt            = 1;    % Diagonal: 1 or Full: 2.
+j.	p.Sig_share_opt = 2;    % Shared: 1 or Unshared: 2.
+In all cases, you must set the Minimum number of ROIs (cells)) in a Cluster. I set this to 1 as default so that even clusters with only 1 cell are included.
+k.	p.MinClusROI_thresh = 1; 
+% Hierarchical Clustering Settings
+I would avoid using this unless you cannot get GMM to work well as it is more fiddly.
+If you do use it, you need to decide on the following settings:
+
+15.	Options:
+a.	p.Info_crit – decide whether to determine the cluster number based on the ‘inconsistency’ (=1) the distance (=2) or to prescribe the number of clusters (=3).
+i.	p.inconsistency_cutoff
+ii.	p.distance_cutoff
+iii.	p.Num_Clus
+b.	pdist_opt_choice – choose pdist option, I would use 3 a default as this works well
+c.	linkage_opt_choice -  choose linkage option, I would use 3 a default as this works well
+d.	p.MinClusROI_thresh – as with GMM
+
+16.	Choose all cells or a subset:
+I would just choose all cells (1).
+Cell_Choice
+a.	1. All cells;
+b.	2. Subset of cells.
+If you choose 2, then you must also choose:
+a.	First_Cell
+b.	Last_Cell
+%%% When calculating STAs (Kernels)
+17.	Choose whether to work with time bins or define own time grid
+Using existing time bins from data (p.Time_Choice = 1) is quicker but gives less detailed (coarser) kernels, whereas defining your own time grid (p.Time_Choice = 2) is more accurate and detailed (smoother).
+18.	Choose whether to subtract the mean raw stimulus in the STA calculation
+Choose ‘p.STA_Choice  = 2’ as default. Probably best to leave as it is. Small speed up if set to 1. It is more correct to remove the raw stim, so 2 is better.
+19.	Choose length of time window in which to find the STEs (spike-triggered ensembles)
+This is in seconds. We are currently using ‘STE_int = 1’ for chicks. This only operates when choosing to use your own time grid (Step 17).
+20.	Choose stimulus resolution
+This is the number of points sampled from the stimulus (STE) time window, whether using time bins from data or your own time grid. In the former case, a higher number means a longer time interval is sampled before the spike, whereas in the latter case (since the time window length is set in Step 19), this determines the resolution within a set time window.
+21.	STA normalisation options (extra normalisation step used to get rid of noise)
+Whether working from exiting time bins or your own time grid:
+a.	STE_norm_bin_start: Is the start of the segment used to normalise the STA
+b.	STE_norm_bin_end: Is the end of the segment used to normalise the STA 
+This time interval should be chosen to precede and not overlap the STE time window and to be of the same temporal duration and (when using your own time grid) resolution (p.Num_STE_bins_norm) as the STE.
+22.	When calculating CNoise
+a.	Full RF Size: Choose between STA-SD and SC (Self covariance) method of RF (receptive field) calculation (which has been calculated previously)
+i.	RF_Ident_Method_RF_Size (1: STA-SD, 2: SC)
+b.	Full RF Ellipticity: 
+i.	Choose between STA-SD and SC: RF_Ident_Method_RF_Ellipticity (1: STA-SD, 2: SC)
+ii.	Choose whether to threshold: p.RF_Ellip_thresh_choice (1: Yes, 2: No)
+We threshold as sometimes there are highly elliptic RFs which skew the results. These are not errors, and are in the minority.
+iii.	Choose threshold value: p.RF_Ellip_thresh
+c.	Full RF Dominant Axis Angle: Choose between STA-SD and SC
+i.	RF_Ident_Method_RF_Dom_Ax_Ang (1: STA-SD, 2: SC)
+23.	Choose y limits on histograms
+Options:
+i.	same limits across all panels (for consistency);
+ii.	different limits on each panel (for visibility),
+p.hist_y_lim
+%% Load Data
+Note the number of triggers per stimulus:
+•	FFF:  		4 trig per rep
+•	Chirp: 		2 trig per rep
+•	FFFNOISE: 		N/A here
+•	Gratings 400px : 	8 trig per rep
+•	FFF2: 		6 trig per rep
+•	SSub:		18 trig per rep
+•	CSteps:		10 trig per rep
+•	Chirp2:		3 trig per rep
+•	Chirp3:		4 trig per rep
+24.	FFF
+a.	FFF_Qual_length_ksdensity_grid = 1000
+b.	FFF_Qual_ksdensity_bdwth = 5*1e-2
+Here and in the following stimuli I have set these variables to values that Tom and I agreed seemed optimal (at least for chicks/zfish). In each case the ‘…_grid’ variable is the number of points on the smoothed stimulus (following kernel density estimation to get a profile for the spike rate from the spike times) and ‘…_bdwth’ is the smoothing bandwidth.
+25.	Chirp
+a.	Chirp_Qual_length_ksdensity_grid = 1000
+b.	Chirp_Qual_ksdensity_bdwth = 5*1e-2
+26.	FFF_Noise
+a.	stim_freq  = 20; % Probably doesn’t need to be changed, but I note it here in case you use something different.
+27.	Gratings_400px
+a.	Gratings_400px_Qual_length_ksdensity_grid = 1000
+b.	Gratings_400px_Qual_ksdensity_bdwth = 1e-2
+28.	CNoise: Full RF Size
+a.	Nothing to choose
+29.	CNoise: Full RF Ellipticity
+a.	Nothing to choose
+30.	CNoise: Full RF Dominant Axis Angle
+a.	Nothing to choose
+31.	FFF2
+a.	FFF2_Qual_length_ksdensity_grid = 1000
+b.	FFF2_Qual_ksdensity_bdwth       = 5*1e-2
+32.	SSub
+a.	SSub_Qual_length_ksdensity_grid = 1000
+b.	SSub_Qual_ksdensity_bdwth       = 5*1e-2
+33.	CSteps
+a.	CSteps_Qual_length_ksdensity_grid = 1000
+b.	CSteps_Qual_ksdensity_bdwth       = 5*1e-2
+34.	Chirp2
+a.	Chirp2_Qual_length_ksdensity_grid = 1000
+b.	Chirp2_Qual_ksdensity_bdwth       = 5*1e-2
+35.	Chirp3
+a.	Chirp3_Qual_length_ksdensity_grid = 1000
+b.	Chirp3_Qual_ksdensity_bdwth       = 5*1e-2
+36.	 Save Data
+I would save the data at this point (at the end of the CL_Cluster_Data_Prep_5.m code) so that it can be reused for different clustering’s in future.
+CL_RF_Clustering_6_fn
+NB: Run this like the previous command line, not like a function. (Either comment out the first line or highlight lines of code, right click and evaluate).
+37.	Ksdensity grids and bandwidths (should be consistent with those used in Steps 24-35).
+a.	FFF_length_ksdensity_grid = 1e3
+b.	FFF_ksdensity_bdwth       = 5*1e-2
+c.	Chirp_length_ksdensity_grid = 1e3
+d.	Chirp_ksdensity_bdwth       = 5*1e-2
+e.	Gratings_400px_length_ksdensity_grid = 1024
+f.	Gratings_400px_ksdensity_bdwth       = 1e-2
+g.	FFF2_length_ksdensity_grid = 1e3
+h.	FFF2_ksdensity_bdwth       = 5*1e-2
+i.	Chirp2_length_ksdensity_grid = 1e3
+j.	Chirp2_ksdensity_bdwth       = 5*1e-2
+k.	SSub_length_ksdensity_grid = 1.8*1e3
+l.	SSub_ksdensity_bdwth       = 5*1e-2
+m.	CSteps_length_ksdensity_grid = 1e3
+n.	CSteps_ksdensity_bdwth       = 5*1e-2
+o.	Chirp3_length_ksdensity_grid = 1e3
+p.	Chirp3_ksdensity_bdwth       = 5*1e-2
+38.	Reorder clusters (in descending order of number of members)?
+1 = no, 2 = yes.
+Reorder_Choice = 2 (default)
+39.	Plot Clustering Results
+a.	There are usually too many clusters to contain in a single plot, therefore split them between different plots, plotting a subset at a time:
+i.	First_Entry – the first cluster to plot
+ii.	Last_Entry – the last cluster to plot
+40.	Save Data
+Save the data at the end of this code.
+
+
+
